@@ -1,19 +1,26 @@
 package info.burrows.interpolatorvisualizer;
 
+import android.animation.ValueAnimator;
+import android.animation.ValueAnimator.AnimatorUpdateListener;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 
 public final class InterpolatorView extends View {
 
+	protected static final String TAG = "InterpolatorView";
 	private final Paint paint = new Paint();
 	private final Converter converter = new Converter();
 	private Interpolator interpolator = new LinearInterpolator();
+	private ValueAnimator animator;
+	protected float position = -1;
 
 	public InterpolatorView(Context context) {
 		super(context);
@@ -64,6 +71,26 @@ public final class InterpolatorView extends View {
 		paint.setColor(Color.WHITE);
 		canvas.drawText(interpolator.getClass().getSimpleName(), 0,
 				paint.getTextSize(), paint);
+
+		if (position >= 0) {
+			float x1 = position;
+			float y1 = interpolator.getInterpolation(x1);
+			canvas.drawCircle(converter.toScreenX(x1), converter.toScreenY(y1),
+					10, paint);
+			canvas.drawCircle(converter.toScreenX(0), converter.toScreenY(y1),
+					10, paint);
+			canvas.drawCircle(converter.toScreenX(x1), converter.toScreenY(0),
+					10, paint);
+		}
+	}
+
+	@Override
+	public boolean onTouchEvent(MotionEvent event) {
+		if (event.getActionMasked() == MotionEvent.ACTION_UP) {
+			play();
+			return true;
+		}
+		return true;
 	}
 
 	@Override
@@ -131,6 +158,24 @@ public final class InterpolatorView extends View {
 			scaleY = height / 4f;
 		}
 
+	}
+
+	public void play() {
+		if (animator != null)
+			animator.cancel();
+		animator = ValueAnimator.ofFloat(0, 1);
+		animator.setDuration(5000);
+		animator.setInterpolator(new LinearInterpolator());
+		animator.addUpdateListener(new AnimatorUpdateListener() {
+
+			@Override
+			public void onAnimationUpdate(ValueAnimator animator) {
+				position = ((Float) animator.getAnimatedValue()).floatValue();
+				Log.d(TAG, String.format("Pos: %.2f", position));
+				invalidate();
+			}
+		});
+		animator.start();
 	}
 
 }
