@@ -10,6 +10,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.animation.Animation;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 
@@ -136,6 +137,11 @@ public final class InterpolatorView extends View {
 
     public void setInterpolator(Interpolator interpolator) {
         this.interpolator = interpolator;
+        if (animator != null) {
+            animator.cancel();
+            position = -1;
+            animator = null;
+        }
         invalidate();
     }
 
@@ -170,13 +176,14 @@ public final class InterpolatorView extends View {
         if (animator != null)
             animator.cancel();
         animator = ValueAnimator.ofFloat(0, 1);
-		animator.setDuration(5000);
+        animator.setDuration(1000);
         animator.setInterpolator(new LinearInterpolator());
+        animator.setRepeatCount(Animation.INFINITE);
         animator.addUpdateListener(new AnimatorUpdateListener() {
 
             @Override
             public void onAnimationUpdate(ValueAnimator animator) {
-                position = ((Float) animator.getAnimatedValue()).floatValue();
+                position = (Float) animator.getAnimatedValue();
                 Log.d(TAG, String.format("Pos: %.2f", position));
                 invalidate();
             }
